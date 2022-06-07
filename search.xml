@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>MongoDB环境搭建</title>
+      <link href="/2022/06/08/MongoDB%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/"/>
+      <url>/2022/06/08/MongoDB%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
+      
+        <content type="html"><![CDATA[<h1 id="MongoDB环境搭建"><a href="#MongoDB环境搭建" class="headerlink" title="MongoDB环境搭建"></a>MongoDB环境搭建</h1><p>环境：</p><p>CentOS 7</p><p>MongoDB 3.4.9</p><hr><h3 id="下载MongoDB"><a href="#下载MongoDB" class="headerlink" title="下载MongoDB"></a>下载MongoDB</h3><p>本次版本：<a href="https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.4.9.tgz">https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.4.9.tgz</a></p><p>官网地址：<a href="https://www.mongodb.com/try/download/community">https://www.mongodb.com/try/download/community</a></p><h3 id="1-解压、创建目录"><a href="#1-解压、创建目录" class="headerlink" title="1.解压、创建目录"></a>1.解压、创建目录</h3><pre class=" language-shell"><code class="language-shell">cd /usr/local#解压tar -zxvf mongodb-linux-x86_64-3.4.9cd mongodb/#创建目录mkdir dbmkdir logs</code></pre><h3 id="2-配置"><a href="#2-配置" class="headerlink" title="2.配置"></a>2.配置</h3><p>进入/usr/local/bin目录下创建mongodb.conf文件。内容如下：</p><pre class=" language-shell"><code class="language-shell">dbpath=/usr/local/mongodb/dblogpath=/usr/local/mongodb/logs/mongodb.logport=27017fork=true#auth=false</code></pre><h3 id="3-测试"><a href="#3-测试" class="headerlink" title="3.测试"></a>3.测试</h3><p>配置完以上,启动MongoDB.执行服务端启动命令。如果日志打印 显示MongoDB的版本号,说明安装成功.</p><pre class=" language-shell"><code class="language-shell">cd /usr/local/mongodb#启动命令./mongod -f /usr/local/mongodb/bin/mongodb.conf</code></pre><img src="https://i.imgtg.com/2022/06/08/1bxKX.png" alt="" style="zoom:100%;"><p>显示如下结果，说明启动成功</p><h3 id="4-启动测试"><a href="#4-启动测试" class="headerlink" title="4.启动测试"></a>4.启动测试</h3><pre class=" language-shell"><code class="language-shell">cd /usr/local/mongodb/bin#连接数据库./mongoconnecting to: mongodb://127.0.0.1:27017MongoDB server version: 3.4.9>switch admin</code></pre><img src="https://i.imgtg.com/2022/06/08/1bUpC.png" alt="" style="zoom:100%;"><p>以上MongoDB环境说明搭建成功！</p><h3 id="5-配置权限"><a href="#5-配置权限" class="headerlink" title="5.配置权限"></a>5.配置权限</h3><pre class=" language-text"><code class="language-text">目前数据库搭建需求: 1) 管理员账户 (创建数据库) 2) 数据库管理员账户(管理数据库、库函数执行、索引执行等) 3) 用户读/写账户 (数据库增删改查)</code></pre><p>详细权限参考如下:</p><table><thead><tr><th>角色名</th><th>权限功能</th></tr></thead><tbody><tr><td>Read</td><td>允许用户读取指定数据库</td></tr><tr><td>readWrite</td><td>允许用户读写指定数据库</td></tr><tr><td>dbAdmin</td><td>允许用户在指定数据库中执行管理函数，如索引创建、删除，查看统计或访问system.profile</td></tr><tr><td>userAdmin</td><td>允许用户向system.users集合写入，可以找指定数据库里创建、删除和管理用户</td></tr><tr><td>clusterAdmin</td><td>只在admin数据库中可用，赋予用户所有分片和复制集相关函数的管理权限。</td></tr><tr><td>readAnyDatabase</td><td>只在admin数据库中可用，赋予用户所有数据库的读权限</td></tr><tr><td>readWriteAnyDatabase</td><td>只在admin数据库中可用，赋予用户所有数据库的读写权限</td></tr><tr><td>userAdminAnyDatabase</td><td>只在admin数据库中可用，赋予用户所有数据库的userAdmin权限</td></tr><tr><td>dbAdminAnyDatabase</td><td>只在admin数据库中可用，赋予用户所有数据库的dbAdmin权限。</td></tr><tr><td>root</td><td>只在admin数据库中可用。超级账号，超级权限</td></tr></tbody></table><h5 id="1-配置超级管理员权限账号"><a href="#1-配置超级管理员权限账号" class="headerlink" title="1.配置超级管理员权限账号"></a>1.配置超级管理员权限账号</h5><p>将mongodb.conf里面的认证权限auth=false,改为true</p><pre class=" language-shell"><code class="language-shell">#新增账户use admindb.createUser({user:"admin",pwd:"admin",roles:[{role:"userAdminAnyDatabase",db:"admin"}]})#设置登陆需要权限vim /usr/local/mongodb/bin/mongodb.conf#将里面auth=false,改为true#关闭服务cd /usr/local/mongodb/bin#关闭服务./mongod --shutdown -f /usr/local/mongodb/bin/mongdb.conf#启动服务./mongod -f /usr/local/mongodb/bin/mongdb.conf#客户端链接./mongo #切换至admin库use admin#执行show logs,如果提示报错:#"errmsg" : "not authorized on admin to execute command { listDatabases: 1.0 }",##"code" : 13,#"codeName" : "Unauthorized" 则证明权限配置成功! 否则需要重新验证mongodb.conf配置文件是否修改成功,并重启mongodb服务#执行权限登陆db.auth('admin','admin') #返回内容</code></pre><img src="https://i.imgtg.com/2022/06/08/1bkBi.png" alt="" style="zoom:100%;"><p>显示如上内容则证明成功</p><h5 id="2-配置数据库管理员权限账号"><a href="#2-配置数据库管理员权限账号" class="headerlink" title="2.配置数据库管理员权限账号"></a>2.配置数据库管理员权限账号</h5><pre class=" language-shell"><code class="language-shell">#新增账户数据库管理员 emosuse emosdb.createUser({user:"emos_admin",pwd:"emos_admin",roles:[{role:"dbAdmin",db:"emos"}]})#关闭服务./mongod --shutdown -f /usr/local/mongodb/bin/mongdb.conf#启动服务./mongod -f /usr/local/mongodb/bin/mongdb.conf#客户端连接./mongo #切换至emos库use emos#指定用户连接数据库,执行结果返回1,代表连接成功db.auth('emos_admin','emos_admin')</code></pre><h5 id="3-配置用户权限账号"><a href="#3-配置用户权限账号" class="headerlink" title="3.配置用户权限账号"></a>3.配置用户权限账号</h5><pre class=" language-shell"><code class="language-shell">#新增账户use admindb.createUser({user:"emos_user",pwd:"user123",roles:[{role:"userAdminAnyDatabase",db:"admin"}]})#设置登陆需要权限vim /usr/local/mongodb/bin/mongodb.conf#将里面auth=false,改为true#关闭服务cd /usr/local/mongodb/bin#配置权限./mongod --shutdown -f /usr/local/mongodb/bin/mongdb.conf#启动服务./mongod -f /usr/local/mongodb/bin/mongdb.conf#客户端连接./mongo #切换至emos库use emos#指定用户连接数据库,执行结果返回1,代表连接成功db.auth('emos_user','user123')</code></pre><h5 id="4-防火墙端口开通"><a href="#4-防火墙端口开通" class="headerlink" title="4.防火墙端口开通"></a>4.防火墙端口开通</h5><p>本人搭建MongoDB是在百度云的轻量应用服务器上,本身这个服务器是默认关闭防火墙和没有安全组。可以不需要如下配置,即可在本地访问目标ip的端口</p><pre class=" language-shell"><code class="language-shell">#查看防火墙systemctl status firewalld.service#关闭防火墙systemctl stop firewalld.service#开启防火墙systemctl start firewalld.service#设置制定端口开墙 firewall-cmd --zone=public --add-port=80/tcp --permanent</code></pre><p>以上,方便自己，方便他人 thx ~~</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 数据库 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 数据库 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>人的精力是有限的</title>
       <link href="/2022/05/12/%E5%85%B3%E4%BA%8E%E7%B2%BE%E5%8A%9B%E7%AE%A1%E7%90%86%E6%88%91%E6%83%B3%E8%AF%B4/"/>
       <url>/2022/05/12/%E5%85%B3%E4%BA%8E%E7%B2%BE%E5%8A%9B%E7%AE%A1%E7%90%86%E6%88%91%E6%83%B3%E8%AF%B4/</url>
